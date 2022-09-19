@@ -1,0 +1,198 @@
+---
+title: "Clustering Ecoli Data"
+output:
+  html_document:
+    toc: true
+    depth: 1
+date: '2022-08-03'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Things to do:
+
+Ada, make sure the following things get done!!
+
+1. add a table of contents
+2. perform multivariate
+3. perform clustering
+4. add titles and labels to graphs
+5. figure out how to facet wrap the bars for the 
+
+
+# Load Necessary Packages 
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+# Read In The Data
+
+```{r}
+df <- read.csv("ecoli.csv")
+```
+
+# Explorartoy Data Analysis
+
+Starting with the structure of the dataframe.
+
+```{r}
+glimpse(df)
+```
+
+The data has `r ncol(df)` variables and `r nrow(df)` observations. Futhermore, the data has exactly `r sum(is.na(df))` missing values.
+
+
+## Class
+
+The class variable is the assigned label for the observation. The possible values are:
+
+1. __cp__ - Cytoplasm
+2. __im__ - Inner membrane without signal sequence
+3. __pp__ - Perisplasm
+4. __imU__ - Inner membrane, uncleavable signal sequence
+5. __om__ - outer membrane
+6. __omL__ - outer membrane lipoprotein
+7. __imL__ - inner membrane lipoprotein
+8. __imS__ - inner membrane, cleavable signal sequence
+
+The classes are very imbalanced.
+
+```{r}
+ggplot(df, aes(x = class, color = class, fill = class)) + geom_bar(alpha = 0.5)
+```
+
+## MCG (McGeoch's Method SSR)
+
+The MCG variable refers to McGeoch's method for signal sequence recognition (SSR). 
+
+The variable is quantitative in nature. 
+
+```{r}
+ggplot(df, aes(x = mcg)) + geom_histogram(alpha = 0.5)
+```
+
+The variable appears to be bi-modal in nature, with peaks around `r (.25 + .5)/2` and `r (.75 + .5)/2`.  Additionally, the variable has a median of `r median(df$mcg)`, a min of `r min(df$mcg)`, and a maximum of `r max(df$mcg)`.
+
+
+```{r}
+ggplot(df, aes(x = mcg, fill = class, color = class)) + geom_histogram(alpha = 0.5) + facet_grid(~ class) + coord_flip()
+
+ggplot(df, aes(x = mcg, fill = class, color = class)) + geom_boxplot(alpha = 0.5) + facet_grid(~ class) + coord_flip()
+```
+
+When the variable is compared by classes, it appears that both the CP is the only variable that places the median for MCG below 0.5, the IM variable places the median at approximately .5, and the remaining classes place the variable above 0.5. 
+
+Additionally, IMU seems to cause the MCG variable to have a strong right skew and OML causes a left skew.
+
+
+## GVH (von Heijne's Method SSR)
+
+The GVH variable refers to von Heijne's method for signal sequence recognition. The variable is quantitative in nature.
+
+```{r}
+ggplot(df, aes(x = gvh)) + geom_histogram(alpha = 0.5)
+```
+
+The variable appears to have a right skew, with a median of `r median(df$gvh)`, a minimum of `r min(df$gvh)`, and a maximum of `r max(df$gvh)`. 
+
+```{r}
+ggplot(df, aes(x = gvh, fill = class, color = class)) + geom_histogram(alpha = 0.5) + facet_grid(~ class) + coord_flip()
+
+ggplot(df, aes(x = gvh, fill = class, color = class)) + geom_boxplot(alpha = 0.5) + facet_grid(~ class) + coord_flip()
+```
+
+
+When comparing the GVH variable to the classes, most of the classes place the median around 0.5, with the exception of OM and PP. OM places the median closer to 0.75 with a right skew and PP places the mean closer to .75 with a strong central tendency.
+
+## LIP (von Heijne's Signal Piptidase II Score)
+
+
+The lip variable is the von Heijne's Signal Peptidase II consensus sequence score. The variable seems to be consist of two values, either 0.48 or 1. `r table(df$lip)`
+
+```{r}
+ggplot(df, aes(x = lip, color = lip, fill = lip)) + geom_histogram(alpha = 0.5)
+```
+
+So, taking this into account, a bar plot is used instead.
+
+```{r}
+df$lip_as_factor <- as.factor(df$lip)
+ggplot(df, aes(x = lip_as_factor, color = lip_as_factor, fill = lip_as_factor)) + geom_bar(alpha = 0.5)
+```
+
+```{r}
+ggplot(df, aes(x = lip_as_factor, color = lip_as_factor, fill = lip_as_factor)) + geom_bar(alpha = 0.5)
+```
+
+```{r}
+ggplot(df, aes(x = class, color = lip_as_factor, fill = lip_as_factor)) + geom_bar(alpha = 0.5, position = "dodge")
+df$lip_as_factor <- NULL
+```
+
+## CHG (N-terminus Charge)
+
+The chg variable is qualitative in nature and captures whether there is a charge on the N-terminous.
+
+```{r}
+table(df$chg)
+```
+
+When compared to the class variable, the single non instance of a 1 occurred when the class variable was `imL`.
+
+```{r}
+ggplot(df, aes(x = class, color = as.factor(chg), fill = as.factor(chg))) + geom_bar(alpha = 0.5, position = "dodge")
+```
+
+## AAC (Score of Amino Acid Membrane and Protiens)
+
+The aac variable is quantitative in nature and captures the score of discriminant analysis of the amino acid content of outer membrane and periplasmic proteins.
+
+```{r}
+ggplot(df, aes(x = aac)) + geom_histogram(alpha = 0.5)
+```
+
+
+```{r}
+ggplot(df, aes(x = aac, fill = class, color = class)) + geom_histogram(alpha = 0.5) + facet_grid(~ class) + coord_flip()
+
+ggplot(df, aes(x = aac, fill = class, color = class)) + geom_boxplot(alpha = 0.5) + facet_grid(~ class) + coord_flip()
+```
+
+
+
+## alm1
+
+
+```{r}
+ggplot(df, aes(x = alm1)) + geom_histogram(alpha = 0.5)
+```
+
+
+```{r}
+ggplot(df, aes(x = alm1, fill = class, color = class)) + geom_histogram(alpha = 0.5) + facet_grid(~ class) + coord_flip()
+
+ggplot(df, aes(x = alm1, fill = class, color = class)) + geom_boxplot(alpha = 0.5) + facet_grid(~ class) + coord_flip()
+```
+
+
+## alm2
+
+
+
+```{r}
+ggplot(df, aes(x = alm2)) + geom_histogram(alpha = 0.5)
+```
+
+
+```{r}
+ggplot(df, aes(x = alm2, fill = class, color = class)) + geom_histogram(alpha = 0.5) + facet_grid(~ class) + coord_flip()
+
+ggplot(df, aes(x = alm2, fill = class, color = class)) + geom_boxplot(alpha = 0.5) + facet_grid(~ class) + coord_flip()
+```
+
+
+# References 
